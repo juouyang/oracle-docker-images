@@ -58,6 +58,7 @@ ENV ORACLE_BASE=/opt/oracle \
     USER_SCRIPTS_FILE="runUserScripts.sh" \
     INSTALL_DB_BINARIES_FILE="installDBBinaries.sh" \
     RELINK_BINARY_FILE="relinkOracleBinary.sh" \
+    CONFIG_TCPS_FILE="configTcps.sh" \
     SLIMMING=$SLIMMING \
     ENABLE_ARCHIVELOG=false \
     ARCHIVELOG_DIR_NAME=archive_logs \
@@ -82,7 +83,7 @@ ENV PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch/:/usr/sbin:$PATH \
 # Copy files needed during both installation and runtime
 # -------------
 COPY $SETUP_LINUX_FILE $CHECK_SPACE_FILE $INSTALL_DIR/
-COPY $RUN_FILE $START_FILE $CREATE_DB_FILE $CREATE_OBSERVER_FILE $CONFIG_RSP $PWD_FILE $CHECK_DB_FILE $USER_SCRIPTS_FILE $RELINK_BINARY_FILE $ORACLE_BASE/
+COPY $RUN_FILE $START_FILE $CREATE_DB_FILE $CREATE_OBSERVER_FILE $CONFIG_RSP $PWD_FILE $CHECK_DB_FILE $USER_SCRIPTS_FILE $RELINK_BINARY_FILE $CONFIG_TCPS_FILE $ORACLE_BASE/
 
 RUN chmod ug+x $INSTALL_DIR/*.sh && \
     sync && \
@@ -130,6 +131,9 @@ RUN $ORACLE_BASE/oraInventory/orainstRoot.sh && \
 
 USER oracle
 WORKDIR /home/oracle
+
+# Add a bashrc file to capitalize ORACLE_SID in the environment
+RUN echo 'ORACLE_SID=${ORACLE_SID:-ORCLCDB}; export ORACLE_SID=${ORACLE_SID^^}' > .bashrc
 
 HEALTHCHECK --interval=1m --start-period=5m --timeout=30s \
    CMD "$ORACLE_BASE/$CHECK_DB_FILE" >/dev/null || exit 1
