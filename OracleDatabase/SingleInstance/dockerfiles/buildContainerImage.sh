@@ -1,13 +1,13 @@
 #!/bin/bash -e
-# 
+#
 # Since: April, 2016
 # Author: gerald.venzl@oracle.com
 # Description: Build script for building Oracle Database container images.
-# 
+#
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-# 
+#
 # Copyright (c) 2014,2021 Oracle and/or its affiliates.
-# 
+#
 
 usage() {
   cat << EOF
@@ -38,7 +38,7 @@ EOF
 # Validate packages
 checksumPackages() {
   if hash md5sum 2>/dev/null; then
-    echo "Checking if required packages are present and valid..."   
+    echo "Checking if required packages are present and valid..."
     if ! md5sum -c "Checksum.${EDITION}"; then
       echo "MD5 for required packages to build this image did not match!"
       echo "Make sure to download missing files in folder ${VERSION}."
@@ -88,12 +88,24 @@ checkDockerVersion() {
   # Get Docker Server version
   echo "Checking Docker version."
   DOCKER_VERSION=$("${CONTAINER_RUNTIME}" version --format '{{.Server.Version | printf "%.5s" }}'|| exit 0)
-  # Remove dot in Docker version
-  DOCKER_VERSION=${DOCKER_VERSION//./}
 
-  if [ "${DOCKER_VERSION}" -lt "${MIN_DOCKER_VERSION//./}" ]; then
-    echo "Docker version is below the minimum required version ${MIN_DOCKER_VERSION}"
-    echo "Please upgrade your Docker installation to proceed."
+  # 解析主要版本和次要版本
+  DOCKER_VERSION_MAJOR=${DOCKER_VERSION%%.*}
+  DOCKER_VERSION_MINOR=$(echo "${DOCKER_VERSION#*.}" | cut -d. -f1 | sed 's/^0*//')
+  MIN_DOCKER_VERSION_MAJOR=${MIN_DOCKER_VERSION%%.*}
+  MIN_DOCKER_VERSION_MINOR=$(echo "${MIN_DOCKER_VERSION#*.}" | cut -d. -f1 | sed 's/^0*//')
+
+  # 使用 printf 格式化版本，確保正確處理 `09` 問題
+  DOCKER_VERSION_FORMATTED=$(printf "%d%02d" "$DOCKER_VERSION_MAJOR" "$DOCKER_VERSION_MINOR")
+  MIN_DOCKER_VERSION_FORMATTED=$(printf "%d%02d" "$MIN_DOCKER_VERSION_MAJOR" "$MIN_DOCKER_VERSION_MINOR")
+
+  # Debug
+  echo "DOCKER_VERSION: $DOCKER_VERSION → $DOCKER_VERSION_FORMATTED"
+  echo "MIN_DOCKER_VERSION: $MIN_DOCKER_VERSION → $MIN_DOCKER_VERSION_FORMATTED"
+
+  # 版本比較
+  if [ "$DOCKER_VERSION_FORMATTED" -lt "$MIN_DOCKER_VERSION_FORMATTED" ]; then
+    echo "Docker version ($DOCKER_VERSION) is below the minimum required version ${MIN_DOCKER_VERSION}"
     exit 1;
   fi;
 }
@@ -266,10 +278,10 @@ echo ""
 echo ""
 
 cat << EOF
-  Oracle Database container image for '${EDITION}' version ${VERSION} is ready to be extended: 
-    
+  Oracle Database container image for '${EDITION}' version ${VERSION} is ready to be extended:
+
     --> ${IMAGE_NAME}
 
   Build completed in ${BUILD_ELAPSED} seconds.
-  
+
 EOF
