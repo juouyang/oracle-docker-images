@@ -2,8 +2,8 @@ export ORACLE_PWD=`openssl rand -base64 8`
 echo "ORACLE PASSWORD FOR SYS, SYSTEM AND PDBADMIN: $ORACLE_PWD";
 
 # persistent data
-mkdir -p /Users/ju/oracle-db/oradata
-export VOLUME_ROOT=/Users/ju/oracle-db/oradata
+mkdir -p "$HOME/oracle-db/oradata" && chmod -R 777 "$HOME/oracle-db/oradata"
+export VOLUME_ROOT="$HOME/oracle-db/oradata"
 docker run -d \
   --name oracle-db \
   -p 1521:1521 \
