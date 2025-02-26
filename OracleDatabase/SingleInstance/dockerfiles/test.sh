@@ -1,5 +1,7 @@
-export ORACLE_IP=172.16.1.104
+export ORACLE_IP=$(ifconfig $(ip route show default | awk "/default/ {print \$5}") | grep inet | grep -v "::" | awk "{print \$2}" | head -n 1)
+export ORACLE_SID=ORCLCDB
+docker pull ghcr.io/oracle/oraclelinux8-instantclient:19
 docker run --rm -it \
   -v $(pwd)/test.sql:/test.sql \
-  guywithnose/sqlplus:latest \
-  sqlplus sys/53916262@//${ORACLE_IP}:1521/ORCLCDB as sysdba @/test.sql
+  ghcr.io/oracle/oraclelinux8-instantclient:19 \
+  sqlplus sys/${ORACLE_PWD}@//${ORACLE_IP}:1521/${ORACLE_SID} as sysdba @/test.sql
